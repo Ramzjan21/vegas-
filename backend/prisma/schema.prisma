@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int                    @id @default(autoincrement())
+  username              String                 @unique
+  password              String
+  fullName              String
+  role                  String                 @default("OFITSIANT") // ADMINISTRATOR, OFITSIANT, KASSIR, OMBORCHI
+  phone                 String?
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  orders                Order[]
+  payments              Payment[]
+  inventoryTransactions InventoryTransaction[]
+  auditLogs             AuditLog[]
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  icon        String?
+  description String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  products    Product[]
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  price       Float
+  description String?
+  imageUrl    String?
+  isAvailable Boolean     @default(true)
+  unit        String      @default("dona") // porsiya, dona, stakan
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  inventoryId Int?
+  inventory   Inventory?  @relation(fields: [inventoryId], references: [id], onDelete: SetNull)
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Table {
+  id           Int           @id @default(autoincrement())
+  number       Int           @unique
+  capacity     Int           @default(4)
+  status       String        @default("EMPTY") // EMPTY, OCCUPIED, RESERVED
+  section      String        @default("Zal") // Zal, Terassa, VIP
+  orders       Order[]
+  reservations Reservation[]
+}
+
+model Customer {
+  id           Int           @id @default(autoincrement())
+  fullName     String
+  phone        String        @unique
+  visitsCount  Int           @default(0)
+  totalSpent   Float         @default(0)
+  notes        String?
+  lastVisitAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  orders       Order[]
+  reservations Reservation[]
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  orderNumber String      @unique
+  tableId     Int
+  table       Table       @relation(fields: [tableId], references: [id])
+  waiterId    Int
+  waiter      User        @relation(fields: [waiterId], references: [id])
+  customerId  Int?
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  status      String      @default("NEW") // NEW, PREPARING, READY, SERVED, PAID, CANCELLED
+  subtotal    Float       @default(0)
+  discount    Float       @default(0)
+  serviceFee  Float       @default(0)
+  finalAmount Float       @default(0)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       OrderItem[]
+  payment     Payment?
+}
+
+model OrderItem {
+  id         Int     @id @default(autoincrement())
+  orderId    Int
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  Int
+  product    Product @relation(fields: [productId], references: [id])
+  quantity   Int     @default(1)
+  unitPrice  Float
+  totalPrice Float
+  comment    String?
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  orderId       Int      @unique
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  cashierId     Int
+  cashier       User     @relation(fields: [cashierId], references: [id])
+  amount        Float
+  paymentMethod String   @default("CASH") // CASH, CARD, MIXED
+  cashReceived  Float?
+  changeGiven   Float?
+  paidAt        DateTime @default(now())
+}
+
+model Reservation {
+  id              Int       @id @default(autoincrement())
+  customerName    String
+  customerPhone   String
+  customerId      Int?
+  customer        Customer? @relation(fields: [customerId], references: [id])
+  tableId         Int
+  table           Table     @relation(fields: [tableId], references: [id])
+  guestsCount     Int       @default(2)
+  reservationDate String    // YYYY-MM-DD
+  reservationTime String    // HH:mm
+  status          String    @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+  notes           String?
+  createdAt       DateTime  @default(now())
+}
+
+model Inventory {
+  id           Int                    @id @default(autoincrement())
+  name         String
+  category     String                 @default("Oziq-ovqat")
+  unit         String                 @default("kg") // kg, litr, dona, gramm
+  initialStock Float                  @default(0)
+  currentStock Float                  @default(0)
+  minStock     Float                  @default(5)
+  pricePerUnit Float                  @default(0)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  products     Product[]
+  transactions InventoryTransaction[]
+}
+
+model InventoryTransaction {
+  id          Int       @id @default(autoincrement())
+  inventoryId Int
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  type        String    // IN, OUT, ADJUSTMENT
+  quantity    Float
+  cost        Float?
+  note        String?
+  createdAt   DateTime  @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String
+  type      String   @default("NEW_ORDER") // LOW_STOCK, NEW_ORDER, RESERVATION, PAYMENT, ORDER_READY
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  Int?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model SystemSettings {
+  id                Int     @id @default(autoincrement())
+  cafeName          String  @default("Vegas Cafe & Lounge")
+  address           String  @default("Toshkent shahri, Amir Temur shoh ko'chasi 45-uy")
+  phone             String  @default("+998 71 200 00 20")
+  serviceFeePercent Float   @default(10)
+  receiptHeader     String  @default("Vegas Cafe ga xush kelibsiz!")
+  receiptFooter     String  @default("Tashrifingiz uchun rahmat! Yana kutib qolamiz.")
+  currency          String  @default("so'm")
+}
