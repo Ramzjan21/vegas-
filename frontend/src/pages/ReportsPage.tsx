@@ -12,7 +12,7 @@ import {
   Flame,
   Award,
 } from 'lucide-react';
-import api from '../api/client';
+import api, { API_BASE_URL } from '../api/client';
 import { StatCard } from '../components/common/StatCard';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 
@@ -43,7 +43,7 @@ export const ReportsPage: React.FC = () => {
 
   const handleExportCSV = async () => {
     try {
-      window.open('/api/reports/export/csv', '_blank');
+      window.open(`${API_BASE_URL}/reports/export/csv`, '_blank');
     } catch (e) {
       console.error('Export failed', e);
     }

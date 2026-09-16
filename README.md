@@ -84,6 +84,51 @@ Tizim diplom himoyasi va demonstratsiya uchun **ikkala rejimni** ham to'liq qo'l
 
 ---
 
+## ☁️ Vercel va Render ga Deploy Qilish (To'liq Qo'llanma)
+
+Mazkur loyiha professional arxitektura asosida ishlab chiqilgan bo'lib, **Frontend (React)** ni **Vercel** ga, **Backend (Node.js + PostgreSQL)** ni esa **Render** ga bepul joylashtirish (deploy) uchun to'liq moslangan.
+
+### 1-QADAM: Backend ni Render ga Deploy qilish
+1. [render.com](https://render.com) ga kiring va GitHub orqali ro'yxatdan o'ting.
+2. **Yangi Web Service** yarating:
+   - **New +** ➔ **Web Service** ni tanlang.
+   - GitHub repositoryingizni tanlang (`Ramzjan21/vegas-`).
+   - Quyidagi parametrlarni kiriting:
+     - **Name**: `vegas-cafe-backend`
+     - **Root Directory**: `backend`
+     - **Runtime**: `Node`
+     - **Build Command**: `npm install && npm run build:render`
+     - **Start Command**: `npm run start:render`
+3. **Ma'lumotlar bazasi (PostgreSQL) ulash**:
+   - Render da **New +** ➔ **PostgreSQL** oching (bepul rejim).
+   - Hosil bo'lgan bazaning **Internal Database URL** (yoki Supabase/Neon connection string) manzilini nusxalang.
+   - Web Service sozlamalarida **Environment Variables** ga quyidagilarni qo'shing:
+     - `DATABASE_URL` = `postgresql://...` (Render yoki Supabase PostgreSQL manzili)
+     - `JWT_SECRET` = `vegas_cafe_jwt_secret_key_super_secure_2026`
+     - `NODE_ENV` = `production`
+4. **Deploy tugmasini bosing**:
+   - Tizim avtomatik ravishda PostgreSQL ga ulanadi, jadvallarni ochadi va agar baza bo'sh bo'lsa, **barcha demo taomlar, stollar va xodimlarni avtomatik joylaydi (auto-seed)**!
+   - Tayyor backend URL olinadi (masalan: `https://vegas-cafe-backend.onrender.com`).
+
+---
+
+### 2-QADAM: Frontend ni Vercel ga Deploy qilish
+1. [vercel.com](https://vercel.com) ga kiring va GitHub orqali kiring.
+2. **Add New...** ➔ **Project** ni tanlang va `Ramzjan21/vegas-` repositorysini tanlang.
+3. Sozlamalarni tekshiring:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend` (Edit tugmasini bosib `frontend` ni tanlang)
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. **Environment Variables** (Muhim!):
+   - `VITE_API_URL` nomli o'zgaruvchi qo'shing va qiymatiga Render'dagi backend havolasini yozing:
+     - `VITE_API_URL` = `https://vegas-cafe-backend.onrender.com`
+5. **Deploy** tugmasini bosing:
+   - 1 daqiqa ichida sayt jonli ishga tushadi (masalan: `https://vegas-cafe.vercel.app`).
+   - `frontend/vercel.json` tufayli sahifani yangilaganda (F5) 404 xatosi chiqmaydi.
+
+---
+
 ## 🎓 Diplom Himoyasi Uchun Bosqichma-bosqich Demonstratsiya Ssenariysi
 
 Himoya hay'ati a'zolari oldida dasturning real ishlashini namoyish qilish uchun quyidagi ssenariyni ketma-ket bajaring:
